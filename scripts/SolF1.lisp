@@ -11,19 +11,34 @@
 ;(load "datastructures.fas")
 ;(load "auxfuncs.fas")
 
-(defun isObstaclep (pos track) 
+(defun isObstaclep (pos track)
   "check if there is an obstacle at position pos of the track"
-  t)
+  (if (car (nthcdr (cadr pos)
+  		(car (nthcdr (car pos)
+			(track-env *track*)))))
+  nil t))
 
-(defun isGoalp (st) 
+
+(defun isGoalp (st)
   "check if st is a goal state"
-  t)
+  (dolist (state (track-endpositions (state-track st)))
+  	      (cond
+		  		((equal state (state-pos st)) (return T))
+				(T NIL)))
+ )
 
 (defun nextState (st act)
   "generate the nextState after state st and action act"
-  (make-STATE :POS '(3 16)
-	      :VEL '(1 3)
-	      :ACTION act
-	      :COST -100))
-
-
+  	(make-STATE
+	:POS ( list (+ (car (state-pos st)) (car (state-vel st)) (car act))
+		  (+ (cadr (state-pos st)) (cadr (state-vel st)) (cadr act)))
+	:VEL ( list (+ (car (state-vel st)) (car act))
+		  (+ (cadr (state-vel st)) (cadr act)))
+	:ACTION act
+	:TRACK (state-track st)
+	:OTHER (state-other st)
+	:COST (cond
+				((isObstaclep :POS (state-track st)) 20)
+				((isGoalp st) -100)
+				(T 1))
+	))
