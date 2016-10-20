@@ -14,9 +14,9 @@
 
 (defun isObstaclep (pos track)
   "check if there is an obstacle at position pos of the track"
-  (if (car (nthcdr (cadr pos)
-  		(car (nthcdr (car pos)
-			(track-env track)))))
+  (if (nth (second pos)
+  		(nth (first pos)
+			(track-env track)))
   nil t))
 
 
