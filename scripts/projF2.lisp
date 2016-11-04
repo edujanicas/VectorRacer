@@ -80,16 +80,16 @@
 						 :fn-nextstates #'nextStates))
 
 
-(print "Exercise 2.2 - limdepthfirstsearch")
-(let ((real1 (get-internal-real-time)))
-
-		(with-open-file (str "out2.2.txt"
-			 :direction :input)
-	  (format t "~% Solution is correct? ~a" (equal (states-to-list  (limdepthfirstsearch *p1* 6)) (read str))))
-
-    (let ((real2 (get-internal-real-time)))
-	(format t "~%Computation took: ~f seconds of real time~%"
-		(/ (- real2 real1) internal-time-units-per-second))))
+; (print "Exercise 2.2 - limdepthfirstsearch")
+; (let ((real1 (get-internal-real-time)))
+;
+; 		(with-open-file (str "out2.2.txt"
+; 			 :direction :input)
+; 	  (format t "~% Solution is correct? ~a" (equal (states-to-list  (limdepthfirstsearch *p1* 6)) (read str))))
+;
+;     (let ((real2 (get-internal-real-time)))
+; 	(format t "~%Computation took: ~f seconds of real time~%"
+; 		(/ (- real2 real1) internal-time-units-per-second))))
 
 
 (print "Exercise 2.3 - iterlimdepthfirstsearch")
