@@ -1,8 +1,10 @@
-(load "datastructures.lisp")
-(load "auxfuncs.lisp")
+
+(load "datastructures.fas")
+
+(load "auxfuncs.fas")
 
 
-;;; TAI position
+;;; TAI positions
 (defun make-pos (c l)
   (list c l))
 (defun pos-l (pos)
@@ -75,22 +77,65 @@
 ;;; Pedir 
 (defun nextStates (st)
   "generate all possible next states"
-	(list st))
+  (let ((successors nil))
+    (dolist (act (possible-actions) successors)
+      (let ((new-state (nextState st act)))
+	(if (not (member new-state successors :test #'equalp))
+	    (push new-state successors))))))
+
+;;; Solucao e uma seq ordenada de estados
+(defun solution (node)
+  (let ((seq-states nil))
+    (loop 
+      (when (null node)
+	(return))
+      (push (node-state node) seq-states)
+      (setf node (node-parent node)))
+    (values seq-states)))
+
 
 ;;; limdepthfirstsearch 
-(defun limdepthfirstsearch (problem lim)
+(defun limdepthfirstsearch (problem lim &key cutoff?)
   "limited depth first search
      st - initial state
      problem - problem information
      lim - depth limit"
-	(list (make-node :state (problem-initial-state problem))) )
+  (labels ((limdepthfirstsearch-aux (node problem lim)
+	     (if (isGoalp (node-state node))
+		 (solution node)
+		 (if (zerop lim)
+		     :cutoff
+		     (let ((cutoff? nil))
+		       (dolist (new-state (nextStates (node-state node)))
+			 (let* ((new-node (make-node :parent node :state new-state))
+				(res (limdepthfirstsearch-aux new-node problem (1- lim))))
+			   (if (eq res :cutoff)
+			       (setf cutoff? :cutoff)
+			       (if (not (null res))
+				   (return-from limdepthfirstsearch-aux res)))))
+		       (values cutoff?))))))
+    (let ((res (limdepthfirstsearch-aux (make-node :parent nil :state (problem-initial-state problem))
+					problem
+					lim)))
+      (if (eq res :cutoff)
+	  (if cutoff?
+	      :cutoff
+	      nil)
+	  res))))
 				      
 
 ;iterlimdepthfirstsearch
-(defun iterlimdepthfirstsearch (problem)
+(defun iterlimdepthfirstsearch (problem &key (lim most-positive-fixnum))
   "limited depth first search
      st - initial state
      problem - problem information
      lim - limit of depth iterations"
-	(list (make-node :state (problem-initial-state problem))) )
+  (let ((i 0))
+    (loop
+      (let ((res (limdepthfirstsearch problem i :cutoff? T)))
+	(when (and res (not (eq res :cutoff)))
+	  (return res))
+	(incf i)
+	(if (> i lim)
+	    (return nil))))))
 
