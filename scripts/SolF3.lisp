@@ -1,5 +1,4 @@
-;;; Eduardo Janicas
-;;; Diana Antunes
+;;; EDUARDO JANICAS 78974 | DIANA ANTUNES 82448 | AL113
 
 (load "datastructures.fas")
 (load "auxfuncs.fas")
@@ -35,31 +34,23 @@
 	  (last nil)
 	  (elements nil))
 
-	;;;; Basic Operations on Queues
-
 	(defun make-empty-queue () (make-q))
 
 	(defun empty-queue? (q)
-	  "Are there no elements in the queue?"
 	  (= (length (q-elements q)) 0))
 
 	(defun queue-front (q)
-	  "Return the element at the front of the queue."
 	  (elt (q-elements q) 0))
 
 	(defun remove-front (q)
-	  "Remove the element from the front of the queue and return it."
 	  (if (listp (q-elements q))
 	      (pop (q-elements q))
 	    (heap-extract-min (q-elements q) (q-key q))))
 
 	(defun enqueue-by-priority (q items key)
-	  "Insert the items by priority according to the key function."
-	  ;; First make sure the queue is in a consistent state
 	  (setf (q-key q) key)
 	  (when (null (q-elements q))
 	    (setf (q-elements q) (make-heap)))
-	  ;; Now insert the items
 	  (loop for item in items do
 	       (heap-insert (q-elements q) item key)))
 
@@ -67,7 +58,6 @@
 		(let ((q (make-empty-queue)))
 			(funcall queuing-fn q (list (create-start-node problem)))
 			q))
-	;;;; The Heap Implementation of Priority Queues
 
 	(defun heap-val (heap i key) (declare (fixnum i)) (funcall key (aref heap i)))
 	(defun heap-parent (i) (declare (fixnum i)) (floor (- i 1) 2))
@@ -75,8 +65,6 @@
 	(defun heap-right (i) (declare (fixnum i)) (the fixnum (+ 2 i i)))
 
 	(defun heapify (heap i key)
-	  "Assume that the children of i are heaps, but that heap[i] may be
-	  larger than its children.  If it is, move heap[i] down where it belongs."
 	  (let ((l (heap-left i))
 		(r (heap-right i))
 		(N (- (length heap) 1))
@@ -91,7 +79,6 @@
 	      (heapify heap smallest key))))
 
 	(defun heap-extract-min (heap key)
-	  "Pop the best (lowest valued) item off the heap."
 	  (let ((min (aref heap 0)))
 	    (setf (aref heap 0) (aref heap (- (length heap) 1)))
 	    (decf (fill-pointer heap))
@@ -99,9 +86,6 @@
 	    min))
 
 	(defun heap-insert (heap item key)
-	  "Put an item into a heap."
-	  ;; Note that ITEM is the value to be inserted, and KEY is a function
-	  ;; that extracts the numeric value from the item.
 	  (vector-push-extend nil heap)
 	  (let ((i (- (length heap) 1))
 		(val (funcall key item)))
@@ -112,16 +96,6 @@
 
 	(defun make-heap (&optional (size 100))
 	  (make-array size :fill-pointer 0 :adjustable t))
-
-	(defun heap-sort (numbers &key (key #'identity))
-	  "Return a sorted list, with elements that are < according to key first."
-	  ;; Mostly for testing the heap implementation
-	  ;; There are more efficient ways of sorting (even of heap-sorting)
-	  (let ((heap (make-heap))
-		(result nil))
-	    (loop for n in numbers do (heap-insert heap n key))
-	    (loop while (> (length heap) 0) do (push (heap-extract-min heap key) result))
-	    (nreverse result)))
 
 ;; Solution of phase 1
 
@@ -231,15 +205,15 @@
 		(if (> i lim)
 		    (return nil))))))
 
+
 ;; Solution of phase 3
 
 (defun expand (node problem)
-"Generate a list of all the nodes that can be reached from a node."
 (let ((nodes nil))
 (loop for state in (reverse (funcall (problem-fn-nextStates problem) (node-state node))) do
 (let* ((g (+ (node-g node)
 	(state-cost state)))
-  (h (compute-heuristic state)))
+  (h (funcall (problem-fn-h problem) state)))
    (push
     (make-node
      :parent node :state state
@@ -249,19 +223,15 @@
   nodes))
 
 (defun best-search (problem)
-  "Expand nodes according to the specification of PROBLEM until we find
-  a solution or run out of nodes to expand.  The QUEUING-FN decides which
-  nodes to look at first. [p 73]"
   (let ((nodes (make-initial-queue problem #'(lambda (old-q nodes) (enqueue-by-priority old-q nodes #'node-f))))
 		node)
     (loop (if (empty-queue? nodes) (RETURN nil))
 	  (setq node (remove-front nodes))
-	  (if (isGoalp (node-state node)) (RETURN node))
+	  (if (funcall (problem-fn-isGoal problem) (node-state node)) (RETURN (solution node)))
 	  (funcall #'(lambda (old-q nodes) (enqueue-by-priority old-q nodes #'node-f)) nodes (expand node problem)))))
 
 (defun create-start-node (problem)
-	"Make the starting node, corresponding to the problem's initial state."
-	(let ((h (compute-heuristic (problem-initial-state problem))))
+	(let ((h (funcall (problem-fn-h problem) (problem-initial-state problem))))
 		(make-node :state (problem-initial-state problem)
 		:g 0 :h h :f h)))
 
@@ -279,4 +249,4 @@
 
 ;;; A*
 (defun a* (problem)
-  (solution (create-start-node problem)))
+  (best-search problem))
